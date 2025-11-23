@@ -1,31 +1,30 @@
 import { useState, type FormEvent } from "react";
-import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function Login() {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [error, setError] = useState<string>("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  const handleLogin = async (e: FormEvent) => {
+  const handleLogin = (e: FormEvent) => {
     e.preventDefault();
     setError("");
 
-    try {
-      const res = await axios.post("http://localhost:3000/auth/login", {
-        email,
-        password,
-      });
-      localStorage.setItem("token", res.data.access_token);
+    // Hardcoded email & password (change anytime)
+    const hardEmail = "abc@gmail.com";
+    const hardPassword = "abcd";
+
+    if (email === hardEmail && password === hardPassword) {
+      localStorage.setItem("token", "dummy-token");
       window.location.href = "/dashboard";
-    } catch (err) {
+    } else {
       setError("Invalid email or password");
     }
   };
 
   return (
     <div className="vh-100 d-flex justify-content-center align-items-center ">
-      <div className="card p-6 " style={{ minWidth: "400px", width: "100%" }}>
+      <div className="card p-4" style={{ minWidth: "400px", width: "100%" }}>
         <h2 className="mb-4 text-center">Welcome Back!</h2>
 
         {error && <div className="alert alert-danger">{error}</div>}
@@ -54,10 +53,6 @@ export default function Login() {
           <button type="submit" className="btn btn-warning w-100 mb-3">
             Login
           </button>
-
-          {/*<button type="button" className="btn btn-outline-secondary w-100 mb-3">
-            Continue with Google
-          </button>*/}
 
           <div className="d-flex justify-content-between">
             <a href="#">Create Account</a>
