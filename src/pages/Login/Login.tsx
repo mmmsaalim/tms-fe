@@ -1,24 +1,23 @@
 import { useState, type FormEvent } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { loginUser } from "../../services/authservice";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleLogin = (e: FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
 
-    // Hardcoded email & password (change anytime)
-    const hardEmail = "abc@gmail.com";
-    const hardPassword = "abcd";
+    const result = await loginUser(email, password);
 
-    if (email === hardEmail && password === hardPassword) {
-      localStorage.setItem("token", "dummy-token");
+    if (result.success) {
+      localStorage.setItem("token", result.token);
       window.location.href = "/dashboard";
     } else {
-      setError("Invalid email or password");
+      setError(result.message || "Invalid email or password");
     }
   };
 
