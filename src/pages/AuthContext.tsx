@@ -1,9 +1,15 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
+export interface User {
+  id: number;       
+  email: string;
+  name?: string;
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: { email: string } | null;
-  loading: boolean; // <--- ADD THIS
+  user: User | null; 
+  loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
@@ -12,19 +18,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<{ email: string } | null>(null);
-  const [loading, setLoading] = useState(true); // <--- Start as TRUE
+  const [user, setUser] = useState<User | null>(null); 
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('token');
       const savedUser = localStorage.getItem('user');
-      
+
       if (token && savedUser) {
         setIsAuthenticated(true);
-        setUser(JSON.parse(savedUser));
+        setUser(JSON.parse(savedUser) as User); 
       }
-      setLoading(false); // <--- Stop loading after checking
+      setLoading(false);
     };
 
     checkAuth();
@@ -40,11 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const data = await response.json();
 
-      if (data.success && data.token) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify({ email }));
+      if (data.success && data.access_token) {
+        localStorage.setItem("token", data.access_token);
+        
+        const userData: User = data.user || { email, id: 0 }; 
+        localStorage.setItem("user", JSON.stringify(userData));
+
         setIsAuthenticated(true);
-        setUser({ email });
+        setUser(userData);
         return true;
       }
       return false;

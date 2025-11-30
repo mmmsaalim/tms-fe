@@ -1,39 +1,36 @@
-// src/services/taskService.ts
+import api from './api';
 
-const API_URL = "http://localhost:3000/tasks";
-
+// Match your Prisma Schema structure
 export interface Task {
   id: number;
-  title: string;
-  assignedTo: string;
-  status: string;
-  createdAt?: string;
+  summary: string;
+  description?: string;
+  status: string; // The backend should return the status Name, not ID, or handle mapping
+  assignedTo?: string; // Backend should return User name
+  priority: string;
+  projectId: number;
+  // ... other fields
 }
 
 export const taskService = {
-  // 1. Get All Tasks
-  getAllTasks: async (): Promise<Task[]> => {
-    const response = await fetch(API_URL);
-    if (!response.ok) throw new Error("Failed to fetch tasks");
-    return response.json();
+  // Get tasks specific to a project
+  getTasksByProject: async (projectId: string | number) => {
+    // Assumes Backend has GET /projects/:id/tasks
+    const response = await api.get<Task[]>(`/projects/${projectId}/tasks`);
+    return response.data;
   },
 
-  // 2. Create Task
-  createTask: async (taskData: Omit<Task, "id">): Promise<Task> => {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(taskData),
-    });
-    if (!response.ok) throw new Error("Failed to create task");
-    return response.json();
+  getAllTasks: async () => {
+    const response = await api.get<Task[]>('/tasks');
+    return response.data;
   },
 
-  // 3. Delete Task
-  deleteTask: async (id: number): Promise<void> => {
-    const response = await fetch(`${API_URL}/${id}`, {
-      method: "DELETE",
-    });
-    if (!response.ok) throw new Error("Failed to delete task");
+  createTask: async (taskData: any) => {
+    const response = await api.post<Task>('/tasks', taskData);
+    return response.data;
+  },
+
+  deleteTask: async (id: number) => {
+    await api.delete(`/tasks/${id}`);
   }
 };
