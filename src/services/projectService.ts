@@ -1,21 +1,23 @@
-import api from './api'; // Assuming you have an axios instance setup here
+import api from './api';
 
-// 1. Define what creates a project (Input DTO)
 export interface CreateProjectDto {
   title: string;
   description?: string;
-  status?: number;          // <--- ALLOW THIS
-  projectOwnerId?: number;  // <--- ALLOW THIS
-  createdById?: number;     // <--- ALLOW THIS
+  createdOn?: string; 
+  dueDate?: string;   
+  status?: number;         
+  projectOwnerId?: number;  
+  createdById?: number;    
 }
 
-// 2. Define what a project looks like (Output)
 export interface Project {
   id: number;
   title: string;
   description?: string;
-  createdOn: string; // or Date
-  // ... other fields from DB
+  createdOn: string;
+  dueDate?: string;
+  updatedOn?: string; 
+  updatedBy?: number; 
 }
 
 export const projectService = {
@@ -24,13 +26,18 @@ export const projectService = {
     return response.data;
   },
 
-  // 3. UPDATE THE ARGUMENT TYPE HERE
   createProject: async (data: CreateProjectDto) => {
     const response = await api.post<Project>('/projects', data);
     return response.data;
   },
+  
+  updateProject: async (id: number, data: { title: string; description?: string; dueDate?: string }) => {
+    const response = await api.patch(`/projects/${id}`, data);
+    return response.data;
+  },
 
   deleteProject: async (id: number) => {
-    await api.delete(`/projects/${id}`);
+    const response = await api.delete<{ message: string }>(`/projects/${id}`);
+    return response.data;
   }
 };

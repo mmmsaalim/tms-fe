@@ -1,17 +1,42 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import { Plus, FolderOpen, LogOut, Search } from 'lucide-react';
+import { 
+  Plus, 
+  FolderOpen, 
+  LogOut, 
+  Search, 
+  Edit2, 
+  Trash2, 
+  Calendar, 
+  Clock 
+} from 'lucide-react'; 
 import { projectService, type Project } from '../services/projectService';
 import CreateProjectModal from './Modals/CreateProjectModal';
+import DeleteConfirmationModal from './Modals/DeleteConfirmationModal';
+import Toast from './Modals/Successmodal';
 
 export default function Projects() {
+  // --- Data State ---
   const [projects, setProjects] = useState<Project[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   
-  // Modal State
+  // --- Modal State ---
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
+  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  // --- Selection State ---
+  const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
+  const [projectToDeleteId, setProjectToDeleteId] = useState<number | null>(null);
+
+  // --- Toast State ---
+  const [toast, setToast] = useState<{ isVisible: boolean; message: string; type: "success" | "error" }>({ 
+    isVisible: false, 
+    message: "", 
+    type: "success" 
+  });
 
   const { logout, user } = useAuth();
   const navigate = useNavigate();
@@ -20,40 +45,94 @@ export default function Projects() {
     fetchProjects();
   }, []);
 
+  // --- Helper: Show Toast ---
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ isVisible: true, message, type });
+  };
+
+  // --- API: Fetch Projects ---
   const fetchProjects = async () => {
     try {
       const data = await projectService.getAllProjects();
       setProjects(data);
     } catch (error) {
       console.error("Failed to load projects", error);
+      showToast("Failed to load projects", "error");
     } finally {
       setLoading(false);
     }
   };
 
-const handleCreateProject = async (data: { title: string; description: string }) => {
-    // 1. Security Check: Ensure user is logged in and has an ID
+  // --- Handlers: Modal Openers ---
+  const openCreateModal = () => {
+    setProjectToEdit(null); // Clear edit state -> Create Mode
+    setCreateModalOpen(true);
+  };
+
+  const openEditModal = (e: React.MouseEvent, project: Project) => {
+    e.stopPropagation(); // Prevent clicking the card
+    setProjectToEdit(project); // Set data -> Edit Mode
+    setCreateModalOpen(true);
+  };
+
+  const openDeleteModal = (e: React.MouseEvent, projectId: number) => {
+    e.stopPropagation(); // Prevent clicking the card
+    setProjectToDeleteId(projectId);
+    setDeleteModalOpen(true);
+  };
+
+  // --- API: Create or Update Project ---
+  const handleProjectSubmit = async (data: { title: string; description: string }) => {
+    // Security check
     if (!user || !user.id) {
-      alert("You are not logged in or your User ID is missing.");
+      showToast("User not logged in or ID missing", "error");
       return;
     }
 
     try {
-      await projectService.createProject({ 
-        title: data.title, 
-        description: data.description,
-        status: 1, 
-        
-        // 2. CHANGE THIS: Use the logged-in user's ID
-        projectOwnerId: Number(user.id), 
-        createdById: Number(user.id)     
-      });
+      if (projectToEdit) {
+        // --- UPDATE MODE ---
+        // Backend automatically sets 'updatedBy' (from token) and 'updatedOn'
+        await projectService.updateProject(projectToEdit.id, data);
+        showToast("Project updated successfully", "success");
+      } else {
+        // --- CREATE MODE ---
+        await projectService.createProject({ 
+          ...data,
+          status: 1, 
+          projectOwnerId: Number(user.id), 
+          createdById: Number(user.id)     
+        });
+        showToast("Project created successfully", "success");
+      }
       
-      await fetchProjects(); 
-      setCreateModalOpen(false); // Close modal on success
-    } catch (error) {
-      alert("Error creating project");
+      await fetchProjects(); // Refresh list
+      setCreateModalOpen(false);
+      setProjectToEdit(null);
+    } catch (error: any) {
       console.error(error);
+      const msg = error.response?.data?.message || "Operation failed";
+      showToast(msg, "error");
+    }
+  };
+
+  // --- API: Delete Project ---
+  const handleConfirmDelete = async () => {
+    if (!projectToDeleteId) return;
+    
+    setIsDeleting(true);
+    try {
+      const response = await projectService.deleteProject(projectToDeleteId);
+      showToast(response.message || "Project deleted", "success");
+      await fetchProjects(); // Refresh list
+    } catch (error: any) {
+      console.error("Delete failed", error);
+      const msg = error.response?.data?.message || "Failed to delete project";
+      showToast(msg, "error");
+    } finally {
+      setIsDeleting(false);
+      setDeleteModalOpen(false);
+      setProjectToDeleteId(null);
     }
   };
 
@@ -62,6 +141,7 @@ const handleCreateProject = async (data: { title: string; description: string })
     navigate("/login");
   };
 
+  // Filter logic
   const filteredProjects = projects.filter((project) =>
     project.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -99,12 +179,12 @@ const handleCreateProject = async (data: { title: string; description: string })
               placeholder="Search projects..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
             />
           </div>
           
           <button
-            onClick={() => setCreateModalOpen(true)}
+            onClick={openCreateModal}
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-sm font-medium"
           >
             <Plus className="w-5 h-5" /> New Project
@@ -118,11 +198,8 @@ const handleCreateProject = async (data: { title: string; description: string })
               <FolderOpen className="w-8 h-8 text-indigo-600" />
             </div>
             <h3 className="text-lg font-medium text-gray-900">No projects yet</h3>
-            <p className="text-gray-500 mt-1 mb-6 max-w-sm">Get started by creating your first project to organize tasks and collaborate.</p>
-            <button
-               onClick={() => setCreateModalOpen(true)}
-               className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
+            <p className="text-gray-500 mt-1 mb-6 max-w-sm">Get started by creating your first project.</p>
+            <button onClick={openCreateModal} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
               Create Project
             </button>
           </div>
@@ -134,14 +211,29 @@ const handleCreateProject = async (data: { title: string; description: string })
                 className="group bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer relative overflow-hidden"
                 onClick={() => navigate(`/projects/${project.id}/tasks`)}
               >
-                {/* Decorative top bar */}
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity" />
 
                 <div className="flex items-start justify-between mb-4">
                   <div className="p-3 bg-indigo-50 group-hover:bg-indigo-100 rounded-lg transition-colors">
                     <FolderOpen className="w-6 h-6 text-indigo-600" />
                   </div>
-                  {/* You can add a 3-dot menu here later if needed */}
+                
+                  <div className="flex items-center gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={(e) => openEditModal(e, project)}
+                      className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+                      title="Edit"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={(e) => openDeleteModal(e, project.id)}
+                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
@@ -152,11 +244,24 @@ const handleCreateProject = async (data: { title: string; description: string })
                   {project.description || "No description provided."}
                 </p>
 
-                <div className="flex items-center justify-between text-xs text-gray-400 border-t border-gray-100 pt-4 mt-2">
-                   <span>Created {new Date(project.createdOn).toLocaleDateString()}</span>
-                   <span className="flex items-center gap-1 text-indigo-600 font-medium">
-                     View Tasks &rarr;
-                   </span>
+                <div className="border-t border-gray-100 pt-4 mt-2 space-y-2">
+                   <div className="flex items-center justify-between text-xs text-gray-500">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                        <span>Created</span>
+                      </div>
+                      <span>{new Date(project.createdOn).toLocaleDateString()}</span>
+                   </div>
+
+                   {project.updatedOn && (
+                     <div className="flex items-center justify-between text-xs text-blue-600/80">
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>Updated</span>
+                        </div>
+                        <span className="font-medium">{new Date(project.updatedOn).toLocaleDateString()}</span>
+                     </div>
+                   )}
                 </div>
               </div>
             ))}
@@ -164,11 +269,26 @@ const handleCreateProject = async (data: { title: string; description: string })
         )}
       </div>
 
-      {/* The Modal */}
       <CreateProjectModal 
         open={isCreateModalOpen} 
         onClose={() => setCreateModalOpen(false)} 
-        onSubmit={handleCreateProject} 
+        onSubmit={handleProjectSubmit}
+        initialData={projectToEdit} 
+      />
+
+      <DeleteConfirmationModal
+        open={isDeleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
+        itemType="Project" 
+      />
+
+      <Toast 
+        message={toast.message} 
+        isVisible={toast.isVisible} 
+        type={toast.type} 
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))} 
       />
     </div>
   );

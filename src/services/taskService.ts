@@ -1,36 +1,50 @@
-import api from './api';
+import api from "./api"; // Ensure this path points to your axios instance
 
-// Match your Prisma Schema structure
+// 1. Updated Interface: Added 'dueDate' and optional joined fields
 export interface Task {
   id: number;
   summary: string;
-  description?: string;
-  status: string; // The backend should return the status Name, not ID, or handle mapping
-  assignedTo?: string; // Backend should return User name
-  priority: string;
+  description: string;
   projectId: number;
-  // ... other fields
+  statusId: number;
+  priorityId: number;
+  typeId: number;
+  assignedToId: number | null;
+  dueDate: string | null; // <--- Fixed: Added this property
+  createdById: number;
+   message: string;
+
+  // These fields usually come from backend relations (joins)
+  status?: string;
+  priority?: string;
+  type?: string;
+  assignedTo?: string; 
 }
 
 export const taskService = {
-  // Get tasks specific to a project
-  getTasksByProject: async (projectId: string | number) => {
-    // Assumes Backend has GET /projects/:id/tasks
-    const response = await api.get<Task[]>(`/projects/${projectId}/tasks`);
+  getTasksByProject: async (projectId: number | string): Promise<Task[]> => {
+    const response = await api.get(`/projects/${projectId}/tasks`);
     return response.data;
   },
 
-  getAllTasks: async () => {
-    const response = await api.get<Task[]>('/tasks');
+  getAllTasks: async (): Promise<Task[]> => {
+    const response = await api.get(`/tasks`);
     return response.data;
   },
 
-  createTask: async (taskData: any) => {
-    const response = await api.post<Task>('/tasks', taskData);
+  createTask: async (taskData: any): Promise<Task> => {
+    const response = await api.post("/tasks", taskData);
+    return response.data;
+  },
+
+  // 2. Fixed: Added the missing updateTask method
+  updateTask: async (id: number, taskData: any): Promise<Task> => {
+    const response = await api.patch(`/tasks/${id}`, taskData);
     return response.data;
   },
 
   deleteTask: async (id: number) => {
-    await api.delete(`/tasks/${id}`);
+    const response = await api.delete(`/tasks/${id}`);
+    return response.data;
   }
 };
