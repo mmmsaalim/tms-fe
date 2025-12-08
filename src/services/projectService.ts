@@ -18,6 +18,9 @@ export interface Project {
   dueDate?: string;
   updatedOn?: string; 
   updatedBy?: number; 
+  _count?: {
+    tasks: number;
+  };
 }
 
 export const projectService = {

@@ -14,20 +14,18 @@ export default function Dashboard() {
   const { projectId } = useParams();
   const navigate = useNavigate();
 
-  // Data State
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projectName, setProjectName] = useState("Website Redesign");
   const [isLoading, setIsLoading] = useState(true);
 
-  // UI State
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const [toast, setToast] = useState<{ isVisible: boolean; message: string; type: "success" | "error" }>({ 
-    isVisible: false, 
-    message: "", 
-    type: "success" 
+  const [toast, setToast] = useState<{ isVisible: boolean; message: string; type: "success" | "error" }>({
+    isVisible: false,
+    message: "",
+    type: "success"
   });
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -162,7 +160,7 @@ export default function Dashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        
+
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div onClick={() => handleStatClick("To Do")} className={`bg-white p-4 rounded-xl border shadow-sm flex items-center gap-4 cursor-pointer transition-all hover:shadow-md ${filterStatus === "To Do" ? "border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50/10" : "border-gray-200"}`}>
@@ -219,11 +217,11 @@ export default function Dashboard() {
         <div className="space-y-4">
           {filteredTasks.length > 0 ? (
             filteredTasks.map((task) => (
-              <TaskCard 
-                key={task.id} 
-                task={task} 
-                onEdit={openEditModal} 
-                onDelete={handleDeleteClick} 
+              <TaskCard
+                key={task.id}
+                task={task}
+                onEdit={openEditModal}
+                onDelete={handleDeleteClick}
               />
             ))
           ) : (
@@ -235,10 +233,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <CreateTaskModal 
-        open={isCreateModalOpen} 
-        onClose={() => setCreateModalOpen(false)} 
-        onSubmit={handleTaskSubmit} 
+      <CreateTaskModal
+        open={isCreateModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onSubmit={handleTaskSubmit}
         projectId={Number(projectId)}
         initialData={selectedTask}
       />
@@ -250,11 +248,11 @@ export default function Dashboard() {
         isDeleting={isDeleting}
       />
 
-      <Toast 
-        message={toast.message} 
-        isVisible={toast.isVisible} 
-        type={toast.type} 
-        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))} 
+      <Toast
+        message={toast.message}
+        isVisible={toast.isVisible}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
       />
     </div>
   );

@@ -1,6 +1,5 @@
-import api from "./api"; // Ensure this path points to your axios instance
+import api from "./api"; 
 
-// 1. Updated Interface: Added 'dueDate' and optional joined fields
 export interface Task {
   id: number;
   summary: string;
@@ -10,11 +9,9 @@ export interface Task {
   priorityId: number;
   typeId: number;
   assignedToId: number | null;
-  dueDate: string | null; // <--- Fixed: Added this property
+  dueDate: string | null; 
   createdById: number;
    message: string;
-
-  // These fields usually come from backend relations (joins)
   status?: string;
   priority?: string;
   type?: string;
@@ -37,7 +34,6 @@ export const taskService = {
     return response.data;
   },
 
-  // 2. Fixed: Added the missing updateTask method
   updateTask: async (id: number, taskData: any): Promise<Task> => {
     const response = await api.patch(`/tasks/${id}`, taskData);
     return response.data;

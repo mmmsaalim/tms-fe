@@ -13,7 +13,6 @@ interface CreateTaskModalProps {
 export default function CreateTaskModal({ open, onClose, onSubmit, projectId, initialData }: CreateTaskModalProps) {
   const [users, setUsers] = useState<User[]>([]);
 
-  // 1. State for form data
   const [formData, setFormData] = useState({
     summary: "",
     description: "",
@@ -21,10 +20,9 @@ export default function CreateTaskModal({ open, onClose, onSubmit, projectId, in
     typeId: 3,
     priorityId: 2,
     statusId: 1,
-    assignedToId: "" as string | number 
+    assignedToId: "" as string | number
   });
 
-  // 2. Fetch Users
   useEffect(() => {
     if (open) {
       const fetchUsers = async () => {
@@ -39,21 +37,17 @@ export default function CreateTaskModal({ open, onClose, onSubmit, projectId, in
     }
   }, [open, projectId]);
 
-  // 3. Sync State with initialData (With Fallback Mapping)
   useEffect(() => {
     if (open) {
       if (initialData) {
-        
-        // --- HELPER MAPPINGS (String -> ID) ---
-        // Used if the backend returns "High" but not priorityId: 3
-        
+
         const getPriorityId = () => {
           if (initialData.priorityId) return initialData.priorityId;
           switch (initialData.priority) {
             case "Highest": return 4;
             case "High": return 3;
             case "Lower": return 1;
-            default: return 2; // Medium
+            default: return 2;
           }
         };
 
@@ -63,7 +57,7 @@ export default function CreateTaskModal({ open, onClose, onSubmit, projectId, in
             case "Done": return 5;
             case "Blocked": return 3;
             case "In Progress": return 2;
-            default: return 1; // To Do
+            default: return 1;
           }
         };
 
@@ -73,18 +67,16 @@ export default function CreateTaskModal({ open, onClose, onSubmit, projectId, in
             case "Sub-task": return 4;
             case "Story": return 2;
             case "Epic": return 1;
-            default: return 3; // Task
+            default: return 3;
           }
         };
 
-        // Find User ID by Name if ID is missing
         let assigneeId = initialData.assignedToId || "";
         if (!assigneeId && initialData.assignedTo && users.length > 0) {
           const foundUser = users.find(u => u.name === initialData.assignedTo);
           if (foundUser) assigneeId = foundUser.id;
         }
 
-        // --- SET FORM DATA ---
         setFormData({
           summary: initialData.summary || "",
           description: initialData.description || "",
@@ -96,7 +88,6 @@ export default function CreateTaskModal({ open, onClose, onSubmit, projectId, in
         });
 
       } else {
-        // CREATE MODE: Defaults
         setFormData({
           summary: "",
           description: "",
@@ -108,9 +99,8 @@ export default function CreateTaskModal({ open, onClose, onSubmit, projectId, in
         });
       }
     }
-  }, [open, initialData, users]); // Added 'users' dependency so assignee maps correctly after users load
+  }, [open, initialData, users]);
 
-  // 4. Handle Change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -135,7 +125,7 @@ export default function CreateTaskModal({ open, onClose, onSubmit, projectId, in
 
         <form onSubmit={(e) => {
           e.preventDefault();
-          
+
           const taskData = {
             projectId: projectId,
             summary: formData.summary,
@@ -152,20 +142,20 @@ export default function CreateTaskModal({ open, onClose, onSubmit, projectId, in
         >
           <div className="mb-4">
             <label className="block text-gray-700 font-medium mb-1">Title</label>
-            <input 
-              name="summary" type="text" required 
-              className="w-full px-3 py-2 border rounded-lg" 
-              placeholder="Task title..." 
+            <input
+              name="summary" type="text" required
+              className="w-full px-3 py-2 border rounded-lg"
+              placeholder="Task title..."
               value={formData.summary} onChange={handleChange}
             />
           </div>
 
           <div className="mb-4">
             <label className="block text-gray-700 font-medium mb-1">Description</label>
-            <textarea 
-              name="description" rows={3} required 
-              className="w-full px-3 py-2 border rounded-lg" 
-              placeholder="Details..." 
+            <textarea
+              name="description" rows={3} required
+              className="w-full px-3 py-2 border rounded-lg"
+              placeholder="Details..."
               value={formData.description} onChange={handleChange}
             />
           </div>
@@ -173,8 +163,8 @@ export default function CreateTaskModal({ open, onClose, onSubmit, projectId, in
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-gray-700 font-medium mb-1">Type</label>
-              <select 
-                name="typeId" 
+              <select
+                name="typeId"
                 className="w-full px-3 py-2 border rounded-lg bg-white"
                 value={formData.typeId} onChange={handleChange}
               >
@@ -187,8 +177,8 @@ export default function CreateTaskModal({ open, onClose, onSubmit, projectId, in
 
             <div>
               <label className="block text-gray-700 font-medium mb-1">Priority</label>
-              <select 
-                name="priorityId" 
+              <select
+                name="priorityId"
                 className="w-full px-3 py-2 border rounded-lg bg-white"
                 value={formData.priorityId} onChange={handleChange}
               >
@@ -203,9 +193,9 @@ export default function CreateTaskModal({ open, onClose, onSubmit, projectId, in
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-gray-700 font-medium mb-1">Status</label>
-              <select 
-                name="statusId" 
-                className="w-full px-3 py-2 border rounded-lg bg-white" 
+              <select
+                name="statusId"
+                className="w-full px-3 py-2 border rounded-lg bg-white"
                 value={formData.statusId} onChange={handleChange}
               >
                 <option value="1">To Do</option>
@@ -217,9 +207,9 @@ export default function CreateTaskModal({ open, onClose, onSubmit, projectId, in
 
             <div>
               <label className="block text-gray-700 font-medium mb-1">Due Date</label>
-              <input 
-                name="dueDate" type="date" required 
-                className="w-full px-3 py-2 border rounded-lg" 
+              <input
+                name="dueDate" type="date" required
+                className="w-full px-3 py-2 border rounded-lg"
                 value={formData.dueDate} onChange={handleChange}
               />
             </div>
@@ -227,8 +217,8 @@ export default function CreateTaskModal({ open, onClose, onSubmit, projectId, in
 
           <div className="mb-6">
             <label className="block text-gray-700 font-medium mb-1">Assignee</label>
-            <select 
-              name="assignedToId" required 
+            <select
+              name="assignedToId" required
               className="w-full px-3 py-2 border rounded-lg bg-white"
               value={formData.assignedToId} onChange={handleChange}
             >

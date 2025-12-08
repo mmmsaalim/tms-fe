@@ -1,13 +1,13 @@
 import { useState, type FormEvent } from "react";
 import { useAuth } from "../../pages/AuthContext"; 
 import { useNavigate } from "react-router-dom"; 
-import { LogIn, AlertCircle } from "lucide-react"; // Import icons for better UI
+import { LogIn, AlertCircle } from "lucide-react"; 
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // Added loading state for button
+  const [isLoading, setIsLoading] = useState(false); 
   
   const { login } = useAuth();
   const navigate = useNavigate(); 

@@ -9,7 +9,8 @@ import {
   Edit2, 
   Trash2, 
   Calendar, 
-  Clock 
+  Clock ,
+  ListChecks
 } from 'lucide-react'; 
 import { projectService, type Project } from '../services/projectService';
 import CreateProjectModal from './Modals/CreateProjectModal';
@@ -17,21 +18,16 @@ import DeleteConfirmationModal from './Modals/DeleteConfirmationModal';
 import Toast from './Modals/Successmodal';
 
 export default function Projects() {
-  // --- Data State ---
   const [projects, setProjects] = useState<Project[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  
-  // --- Modal State ---
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   
-  // --- Selection State ---
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
   const [projectToDeleteId, setProjectToDeleteId] = useState<number | null>(null);
 
-  // --- Toast State ---
   const [toast, setToast] = useState<{ isVisible: boolean; message: string; type: "success" | "error" }>({ 
     isVisible: false, 
     message: "", 
@@ -45,12 +41,10 @@ export default function Projects() {
     fetchProjects();
   }, []);
 
-  // --- Helper: Show Toast ---
   const showToast = (message: string, type: "success" | "error") => {
     setToast({ isVisible: true, message, type });
   };
 
-  // --- API: Fetch Projects ---
   const fetchProjects = async () => {
     try {
       const data = await projectService.getAllProjects();
@@ -63,27 +57,24 @@ export default function Projects() {
     }
   };
 
-  // --- Handlers: Modal Openers ---
   const openCreateModal = () => {
-    setProjectToEdit(null); // Clear edit state -> Create Mode
+    setProjectToEdit(null); 
     setCreateModalOpen(true);
   };
 
   const openEditModal = (e: React.MouseEvent, project: Project) => {
-    e.stopPropagation(); // Prevent clicking the card
-    setProjectToEdit(project); // Set data -> Edit Mode
+    e.stopPropagation(); 
+    setProjectToEdit(project); 
     setCreateModalOpen(true);
   };
 
   const openDeleteModal = (e: React.MouseEvent, projectId: number) => {
-    e.stopPropagation(); // Prevent clicking the card
+    e.stopPropagation(); 
     setProjectToDeleteId(projectId);
     setDeleteModalOpen(true);
   };
 
-  // --- API: Create or Update Project ---
   const handleProjectSubmit = async (data: { title: string; description: string }) => {
-    // Security check
     if (!user || !user.id) {
       showToast("User not logged in or ID missing", "error");
       return;
@@ -91,12 +82,9 @@ export default function Projects() {
 
     try {
       if (projectToEdit) {
-        // --- UPDATE MODE ---
-        // Backend automatically sets 'updatedBy' (from token) and 'updatedOn'
         await projectService.updateProject(projectToEdit.id, data);
         showToast("Project updated successfully", "success");
       } else {
-        // --- CREATE MODE ---
         await projectService.createProject({ 
           ...data,
           status: 1, 
@@ -106,7 +94,7 @@ export default function Projects() {
         showToast("Project created successfully", "success");
       }
       
-      await fetchProjects(); // Refresh list
+      await fetchProjects(); 
       setCreateModalOpen(false);
       setProjectToEdit(null);
     } catch (error: any) {
@@ -116,7 +104,6 @@ export default function Projects() {
     }
   };
 
-  // --- API: Delete Project ---
   const handleConfirmDelete = async () => {
     if (!projectToDeleteId) return;
     
@@ -124,7 +111,7 @@ export default function Projects() {
     try {
       const response = await projectService.deleteProject(projectToDeleteId);
       showToast(response.message || "Project deleted", "success");
-      await fetchProjects(); // Refresh list
+      await fetchProjects();
     } catch (error: any) {
       console.error("Delete failed", error);
       const msg = error.response?.data?.message || "Failed to delete project";
@@ -141,7 +128,6 @@ export default function Projects() {
     navigate("/login");
   };
 
-  // Filter logic
   const filteredProjects = projects.filter((project) =>
     project.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -150,7 +136,6 @@ export default function Projects() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
@@ -170,7 +155,6 @@ export default function Projects() {
 
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         
-        {/* Controls Bar */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
           <div className="relative w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -191,7 +175,6 @@ export default function Projects() {
           </button>
         </div>
 
-        {/* Project Grid */}
         {projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-dashed border-gray-300 text-center">
             <div className="p-4 bg-indigo-50 rounded-full mb-4">
@@ -243,6 +226,11 @@ export default function Projects() {
                 <p className="text-gray-500 text-sm mb-4 line-clamp-2 h-10">
                   {project.description || "No description provided."}
                 </p>
+
+                <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-3">
+                  <ListChecks className="w-4 h-4 text-indigo-600" />
+                  <span>{project._count?.tasks ?? 0} tasks</span>
+                </div>
 
                 <div className="border-t border-gray-100 pt-4 mt-2 space-y-2">
                    <div className="flex items-center justify-between text-xs text-gray-500">

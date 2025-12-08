@@ -1,6 +1,6 @@
 import { Edit2, Trash2, Calendar, User, Tag } from "lucide-react";
 import { type Task } from "../services/taskService";
-import { statusConfig, priorityConfig } from "../utils/taskConfig"; 
+import { statusConfig, priorityConfig } from "../utils/taskConfig";
 
 interface TaskCardProps {
   task: Task;
@@ -12,10 +12,10 @@ export default function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
   const statusName = task.status || "To Do";
   const sConf = statusConfig[statusName] || statusConfig["To Do"];
   const StatusIcon = sConf.icon;
-  
+
   const priorityName = (task as any).priority || "Medium";
   const pConf = priorityConfig[priorityName] || priorityConfig["Medium"];
-  
+
   const dueDate = task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No Date";
 
   return (
