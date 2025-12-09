@@ -18,9 +18,8 @@ A full-stack application for managing projects and tasks, built as part of a tec
 *   MySQL (Database)
 *   Passport JWT (Authentication)
 
----
 
-## 🚀 Setup Instructions
+##  Setup Instructions
 
 ### Prerequisites
 *   Node.js (v18+)
@@ -29,59 +28,49 @@ A full-stack application for managing projects and tasks, built as part of a tec
 ### 1. Backend Setup (NestJS)
 
 1.  Navigate to the backend directory:
-    ```bash
+    bash
     cd backend
-    ```
 
 2.  Install dependencies:
-    ```bash
+    bash
     npm install
-    ```
 
 3.  Create a `.env` file in the `backend` root and configure your database connection:
-    ```env
+    env
     # backend/.env
     DATABASE_URL="mysql://root:@localhost:3306/tms"
     JWT_SECRET="SUPER_SECRET_KEY_123"
-    ```
     *(Note: The database name is `tms`. If your local MySQL has a password, add it after `root:` like `root:yourpassword@...`)*
 
 4.  Run database migrations to create tables:
-    ```bash
+    bash
     npx prisma migrate dev --name init
-    ```
 
 5.  **Seed the database** (Crucial for Login):
     This creates the default Admin user and demo data.
-    ```bash
+    bash
     npx prisma db seed
-    ```
 
 6.  Start the backend server:
-    ```bash
+    bash
     npm run start:dev
-    ```
     The API will run at `http://localhost:3000`.
 
 ### 2. Frontend Setup (React)
 
 1.  Open a new terminal and navigate to the frontend directory:
-    ```bash
+    bash
     cd frontend
-    ```
 
 2.  Install dependencies:
-    ```bash
+    bash
     npm install
-    ```
 
 3.  Start the development server:
-    ```bash
+    bash
     npm run dev
-    ```
     The UI will run at `http://localhost:5173` (or similar).
 
----
 
 ##  Login Credentials (Seeded)
 
@@ -92,9 +81,8 @@ Use the following credentials to log in (created via the seed script):
 
 *(Alternative user from seed: `abc@gmail.com` / `12345`)*
 
----
 
-## 📡 API Endpoints Summary
+##  API Endpoints Summary
 
 ### Authentication
 *   `POST /auth/login` - Authenticate user and return JWT.
@@ -113,7 +101,6 @@ Use the following credentials to log in (created via the seed script):
 *   `PATCH /tasks/:id` - Update a task (status, priority, etc.).
 *   `DELETE /tasks/:id` - Delete a task.
 
----
 
 ##  Known Limitations
 
@@ -122,13 +109,12 @@ Use the following credentials to log in (created via the seed script):
 3.  **Role Management:** While the database supports roles (Admin/User), the UI currently treats the logged-in user as an Admin with full access.
 4.  **Error Handling:** Basic error handling is implemented via Toast notifications, but complex network failures might need a page refresh.
 
----
 
 ##  Running Tests
 
 To run the unit tests included in the repository:
 
 **Frontend:**
-```bash
+bash
 cd frontend
 npm test
