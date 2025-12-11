@@ -1,22 +1,56 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login/Login';
-import Dashboard from './pages/Dashboard/Dashboard';
-import "./App.css";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "./pages/AuthContext"; 
+import Login from "./pages/Login/Login"; 
+import Dashboard from "./pages/Dashboard"; // This is your Task View
+import Projects from "./pages/projects";
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>; 
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+}
 
 function App() {
-  const isLoggedIn = !!localStorage.getItem("token"); // check if token exists
-
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          
+          {/* Main Dashboard now shows Projects */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Projects />
+              </ProtectedRoute>
+            }
+          />
 
-      <Route
-        path="/dashboard"
-        element={isLoggedIn ? <Dashboard /> : <Navigate to="/login" replace />}
-      />
+          {/* New Route: Specific Project Tasks */}
+          <Route
+            path="/projects/:projectId/tasks"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
 
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+          {/* Redirect root to dashboard */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/login" />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 
