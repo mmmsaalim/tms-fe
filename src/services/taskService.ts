@@ -16,6 +16,7 @@ export interface Task {
   priority?: string;
   type?: string;
   assignedTo?: string; 
+  updatedOn: string | null; 
 }
 
 export const taskService = {

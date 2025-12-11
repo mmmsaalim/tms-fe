@@ -1,6 +1,7 @@
 import { Edit2, Trash2, Calendar, User, Tag } from "lucide-react";
 import { type Task } from "../services/taskService";
 import { statusConfig, priorityConfig } from "../utils/taskConfig";
+import { Clock } from "lucide-react";
 
 interface TaskCardProps {
   task: Task;
@@ -63,9 +64,25 @@ export default function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
             {(task as any).assignedTo || "Unassigned"}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 text-gray-400 text-xs ml-auto">
-          <Calendar className="w-3.5 h-3.5" />
-          {dueDate}
+
+        <div className="flex flex-col gap-1 text-xs ml-auto">
+          <div className="flex items-center gap-1.5 text-gray-400 text-xs ml-auto">
+            <Calendar className="w-3.5 h-3.5" />
+            <span> Due Date </span>
+            {dueDate}
+          </div>
+
+          {task.updatedOn && (
+            <div className="flex items-center gap-1.5 text-xs text-blue-600/80">
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" />
+                <span>Updated</span>
+              </div>
+              <span className="font-medium">
+                {new Date(task.updatedOn).toLocaleDateString()}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>
