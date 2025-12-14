@@ -1,18 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import { 
-  Plus, 
-  FolderOpen, 
-  LogOut, 
-  Search, 
-  Edit2, 
-  Trash2, 
-  Calendar, 
-  Clock ,
+import {
+  Plus,
+  FolderOpen,
+  LogOut,
+  Search,
+  Edit2,
+  Trash2,
+  Calendar,
+  Clock,
   ListChecks
-} from 'lucide-react'; 
+} from 'lucide-react';
+
 import { projectService, type Project } from '../services/projectService';
+import { projectStatusConfig } from '../utils/taskConfig';
 import CreateProjectModal from './Modals/CreateProjectModal';
 import DeleteConfirmationModal from './Modals/DeleteConfirmationModal';
 import Toast from './Modals/Successmodal';
@@ -24,14 +26,12 @@ export default function Projects() {
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
   const [projectToDeleteId, setProjectToDeleteId] = useState<number | null>(null);
 
-  const [toast, setToast] = useState<{ isVisible: boolean; message: string; type: "success" | "error" }>({ 
-    isVisible: false, 
-    message: "", 
-    type: "success" 
+  const [toast, setToast] = useState<{ isVisible: boolean; message: string; type: "success" | "error" }>({
+    isVisible: false, message: "", type: "success"
   });
 
   const { logout, user } = useAuth();
@@ -58,25 +58,25 @@ export default function Projects() {
   };
 
   const openCreateModal = () => {
-    setProjectToEdit(null); 
+    setProjectToEdit(null);
     setCreateModalOpen(true);
   };
 
   const openEditModal = (e: React.MouseEvent, project: Project) => {
-    e.stopPropagation(); 
-    setProjectToEdit(project); 
+    e.stopPropagation();
+    setProjectToEdit(project);
     setCreateModalOpen(true);
   };
 
   const openDeleteModal = (e: React.MouseEvent, projectId: number) => {
-    e.stopPropagation(); 
+    e.stopPropagation();
     setProjectToDeleteId(projectId);
     setDeleteModalOpen(true);
   };
 
-  const handleProjectSubmit = async (data: { title: string; description: string }) => {
+  const handleProjectSubmit = async (data: { title: string; description: string; status: number; projectOwnerId?: number }) => {
     if (!user || !user.id) {
-      showToast("User not logged in or ID missing", "error");
+      showToast("User not logged in", "error");
       return;
     }
 
@@ -85,16 +85,11 @@ export default function Projects() {
         await projectService.updateProject(projectToEdit.id, data);
         showToast("Project updated successfully", "success");
       } else {
-        await projectService.createProject({ 
-          ...data,
-          status: 1, 
-          projectOwnerId: Number(user.id), 
-          createdById: Number(user.id)     
-        });
+        await projectService.createProject(data);
         showToast("Project created successfully", "success");
       }
-      
-      await fetchProjects(); 
+
+      await fetchProjects();
       setCreateModalOpen(false);
       setProjectToEdit(null);
     } catch (error: any) {
@@ -106,7 +101,7 @@ export default function Projects() {
 
   const handleConfirmDelete = async () => {
     if (!projectToDeleteId) return;
-    
+
     setIsDeleting(true);
     try {
       const response = await projectService.deleteProject(projectToDeleteId);
@@ -144,17 +139,16 @@ export default function Projects() {
               <p className="text-sm text-gray-500">Manage your work and tasks</p>
             </div>
             <div className="flex items-center gap-4">
-               <span className="text-sm text-gray-600 hidden sm:block">{user?.email}</span>
-               <button onClick={handleLogout} className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                 <LogOut className="w-4 h-4" /> Logout
-               </button>
+              <span className="text-sm text-gray-600 hidden sm:block">{user?.email}</span>
+              <button onClick={handleLogout} className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <LogOut className="w-4 h-4" /> Logout
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
           <div className="relative w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -166,7 +160,7 @@ export default function Projects() {
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
             />
           </div>
-          
+
           <button
             onClick={openCreateModal}
             className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-sm font-medium"
@@ -188,80 +182,101 @@ export default function Projects() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project) => (
-              <div
-                key={project.id}
-                className="group bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer relative overflow-hidden"
-                onClick={() => navigate(`/projects/${project.id}/tasks`)}
-              >
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+            {filteredProjects.map((project) => {
+              const isAdmin = project.currentUserRole === 1;
+              const pConfig = projectStatusConfig[project.status] || projectStatusConfig[0];
+              const StatusIcon = pConfig.icon;
 
-                <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 bg-indigo-50 group-hover:bg-indigo-100 rounded-lg transition-colors">
-                    <FolderOpen className="w-6 h-6 text-indigo-600" />
+              return (
+                <div
+                  key={project.id}
+                  className="group bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer relative overflow-hidden"
+                  onClick={() => navigate(`/projects/${project.id}/tasks`)}
+                >
+                  <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${pConfig.gradient} opacity-0 group-hover:opacity-100 transition-opacity`} />
+
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-3 bg-indigo-50 group-hover:bg-indigo-100 rounded-lg transition-colors">
+                      <FolderOpen className="w-6 h-6 text-indigo-600" />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className={`flex items-center gap-1 text-[10px] px-2 py-1 rounded-full border font-medium ${pConfig.bgColor} ${pConfig.borderColor} ${pConfig.color}`}>
+                        <StatusIcon className="w-3 h-3" />
+                        {pConfig.label}
+                      </span>
+
+                      {isAdmin && (
+                        <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                          <button
+                            onClick={(e) => openEditModal(e, project)}
+                            className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+                            title="Edit"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => openDeleteModal(e, project.id)}
+                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                
-                  <div className="flex items-center gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button 
-                      onClick={(e) => openEditModal(e, project)}
-                      className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
-                      title="Edit"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={(e) => openDeleteModal(e, project.id)}
-                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+
+                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
+                    {project.title}
+                  </h3>
+
+                  <p className="text-gray-500 text-sm mb-4 line-clamp-2 h-10">
+                    {project.description || "No description provided."}
+                  </p>
+
+                  <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-3">
+                    <ListChecks className="w-4 h-4 text-indigo-600" />
+                    <span>{project._count?.tasks ?? 0} tasks</span>
                   </div>
-                </div>
 
-                <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
-                  {project.title}
-                </h3>
-                
-                <p className="text-gray-500 text-sm mb-4 line-clamp-2 h-10">
-                  {project.description || "No description provided."}
-                </p>
-
-                <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-3">
-                  <ListChecks className="w-4 h-4 text-indigo-600" />
-                  <span>{project._count?.tasks ?? 0} tasks</span>
-                </div>
-
-                <div className="border-t border-gray-100 pt-4 mt-2 space-y-2">
-                   <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div className="border-t border-gray-100 pt-4 mt-2 space-y-2">
+                    <div className="flex items-center justify-between text-xs text-gray-500">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-gray-400" />
                         <span>Created</span>
                       </div>
                       <span>{new Date(project.createdOn).toLocaleDateString()}</span>
-                   </div>
+                    </div>
 
-                   {project.updatedOn && (
-                     <div className="flex items-center justify-between text-xs text-blue-600/80">
+                    {project.updatedOn && (
+                      <div className="flex items-center justify-between text-xs text-blue-600/80">
                         <div className="flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5" />
                           <span>Updated</span>
                         </div>
                         <span className="font-medium">{new Date(project.updatedOn).toLocaleDateString()}</span>
-                     </div>
-                   )}
+                      </div>
+                    )}
+
+                    <div className="pt-2">
+                      <span className={`text-[10px] px-2 py-0.5 rounded border ${isAdmin ? 'bg-purple-50 border-purple-100 text-purple-600' : 'bg-blue-50 border-blue-100 text-blue-600'}`}>
+                        {isAdmin ? "Admin" : "Member"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
-      <CreateProjectModal 
-        open={isCreateModalOpen} 
-        onClose={() => setCreateModalOpen(false)} 
+      <CreateProjectModal
+        open={isCreateModalOpen}
+        onClose={() => setCreateModalOpen(false)}
         onSubmit={handleProjectSubmit}
-        initialData={projectToEdit} 
+        initialData={projectToEdit}
       />
 
       <DeleteConfirmationModal
@@ -269,14 +284,14 @@ export default function Projects() {
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={handleConfirmDelete}
         isDeleting={isDeleting}
-        itemType="Project" 
+        itemType="Project"
       />
 
-      <Toast 
-        message={toast.message} 
-        isVisible={toast.isVisible} 
-        type={toast.type} 
-        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))} 
+      <Toast
+        message={toast.message}
+        isVisible={toast.isVisible}
+        type={toast.type}
+        onClose={() => setToast(prev => ({ ...prev, isVisible: false }))}
       />
     </div>
   );

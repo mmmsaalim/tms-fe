@@ -1,25 +1,52 @@
 import { useState, useEffect } from "react";
-import { X, FolderPlus, Edit2 } from "lucide-react";
+import { X, FolderPlus, Edit2, UserCircle } from "lucide-react";
+import { userService, type User } from "../../services/userService";
 
 interface CreateProjectModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (projectData: { title: string; description: string }) => Promise<void>;
-  initialData?: { title: string; description?: string | null } | null;
+  onSubmit: (projectData: { title: string; description: string; status: number; projectOwnerId?: number }) => Promise<void>;
+  initialData?: {
+    title: string;
+    description?: string | null;
+    status?: number;
+    projectOwnerId?: number
+  } | null;
 }
 
 export default function CreateProjectModal({ open, onClose, onSubmit, initialData }: CreateProjectModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [status, setStatus] = useState(1);
+  const [ownerId, setOwnerId] = useState<number | string>("");
+  const [users, setUsers] = useState<User[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      const loadUsers = async () => {
+        try {
+          const data = await userService.getAllUsers();
+          setUsers(data);
+        } catch (err) {
+          console.error("Failed to load users", err);
+        }
+      };
+      loadUsers();
+    }
+  }, [open]);
 
   useEffect(() => {
     if (open && initialData) {
       setTitle(initialData.title);
       setDescription(initialData.description || "");
+      setStatus(initialData.status !== undefined ? initialData.status : 1);
+      setOwnerId(initialData.projectOwnerId || "");
     } else if (open && !initialData) {
       setTitle("");
       setDescription("");
+      setStatus(1);
+      setOwnerId("");
     }
   }, [open, initialData]);
 
@@ -31,7 +58,17 @@ export default function CreateProjectModal({ open, onClose, onSubmit, initialDat
 
     setIsSubmitting(true);
     try {
-      await onSubmit({ title, description });
+      const payload: any = {
+        title,
+        description,
+        status: Number(status),
+      };
+
+      if (ownerId && ownerId !== "") {
+        payload.projectOwnerId = Number(ownerId);
+      }
+
+      await onSubmit(payload);
       onClose();
     } catch (error) {
       console.error(error);
@@ -60,9 +97,44 @@ export default function CreateProjectModal({ open, onClose, onSubmit, initialDat
             <label className="block text-sm font-medium text-gray-700 mb-1">Project Title *</label>
             <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" required />
           </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(Number(e.target.value))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+              >
+                <option value={1}>Active</option>
+                <option value={0}>Inactive</option>
+              </select>
+            </div>
+
+            {isEditMode && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Owner</label>
+                <div className="relative">
+                  <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <select
+                    value={ownerId}
+                    onChange={(e) => setOwnerId(Number(e.target.value))}
+                    className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                  >
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 mt-6">

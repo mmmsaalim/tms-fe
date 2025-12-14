@@ -1,48 +1,55 @@
-import { Edit2, Trash2, Calendar, User, Tag } from "lucide-react";
+import { Edit2, Trash2, Calendar, User } from "lucide-react";
 import { type Task } from "../services/taskService";
+// IMPORT CONFIG
 import { statusConfig, priorityConfig } from "../utils/taskConfig";
-import { Clock } from "lucide-react";
 
 interface TaskCardProps {
   task: Task;
-  onEdit: (task: Task) => void;
-  onDelete: (taskId: number) => void;
+  onEdit?: (task: Task) => void;
+  onDelete?: (taskId: number) => void;
 }
 
 export default function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
   const statusName = task.status || "To Do";
-  const sConf = statusConfig[statusName] || statusConfig["To Do"];
+  const sConf = statusConfig[statusName] || statusConfig["default"];
   const StatusIcon = sConf.icon;
-
   const priorityName = (task as any).priority || "Medium";
   const pConf = priorityConfig[priorityName] || priorityConfig["Medium"];
-
-  const dueDate = task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No Date";
+  const PriorityIcon = pConf.icon;
 
   return (
     <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start mb-2">
         <div className="flex items-center gap-3">
           <h3 className="text-lg font-semibold text-gray-900">{task.summary}</h3>
-          <span className={`px-2 py-0.5 rounded text-xs font-medium ${pConf.bgColor} ${pConf.color}`}>
+          <span className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${pConf.bgColor} ${pConf.color}`}>
+            <PriorityIcon className="w-3 h-3" />
             {priorityName}
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onEdit(task)}
-            className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-gray-100 rounded-md transition-colors"
-          >
-            <Edit2 className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onDelete(task.id)}
-            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-gray-100 rounded-md transition-colors"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
+        {(onEdit || onDelete) && (
+          <div className="flex items-center gap-2">
+            {onEdit && (
+              <button
+                onClick={() => onEdit(task)}
+                className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-gray-100 rounded-md transition-colors"
+                title="Edit Task"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={() => onDelete(task.id)}
+                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-gray-100 rounded-md transition-colors"
+                title="Delete Task"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <p className="text-gray-500 text-sm mb-4 line-clamp-2">
@@ -54,10 +61,7 @@ export default function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
           <StatusIcon className="w-3.5 h-3.5" />
           {statusName}
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-gray-600 bg-gray-100 px-2.5 py-1 rounded-md">
-          <Tag className="w-3.5 h-3.5 text-gray-500" />
-          {(task as any).type || "Task"}
-        </div>
+
         <div className="flex items-center gap-1.5 text-xs text-gray-500">
           <User className="w-3.5 h-3.5 text-gray-400" />
           <span className="font-medium text-gray-700">
@@ -65,24 +69,9 @@ export default function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
           </span>
         </div>
 
-        <div className="flex flex-col gap-1 text-xs ml-auto">
-          <div className="flex items-center gap-1.5 text-gray-400 text-xs ml-auto">
-            <Calendar className="w-3.5 h-3.5" />
-            <span> Due Date </span>
-            {dueDate}
-          </div>
-
-          {task.updatedOn && (
-            <div className="flex items-center gap-1.5 text-xs text-blue-600/80">
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" />
-                <span>Updated</span>
-              </div>
-              <span className="font-medium">
-                {new Date(task.updatedOn).toLocaleDateString()}
-              </span>
-            </div>
-          )}
+        <div className="ml-auto text-xs text-gray-400 flex items-center gap-1">
+          <Calendar className="w-3.5 h-3.5" />
+          {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No Date"}
         </div>
       </div>
     </div>

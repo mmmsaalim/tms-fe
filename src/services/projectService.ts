@@ -1,26 +1,15 @@
+// src/services/projectService.ts
 import api from './api';
-
-export interface CreateProjectDto {
-  title: string;
-  description?: string;
-  createdOn?: string; 
-  dueDate?: string;   
-  status?: number;         
-  projectOwnerId?: number;  
-  createdById?: number;    
-}
 
 export interface Project {
   id: number;
   title: string;
   description?: string;
   createdOn: string;
-  dueDate?: string;
-  updatedOn?: string; 
-  updatedBy?: number; 
-  _count?: {
-    tasks: number;
-  };
+  currentUserRole?: number; // 1=Admin, 2=User, 3=Viewer
+  _count?: { tasks: number };
+  updatedOn:string;
+  status: number;
 }
 
 export const projectService = {
@@ -29,18 +18,29 @@ export const projectService = {
     return response.data;
   },
 
-  createProject: async (data: CreateProjectDto) => {
-    const response = await api.post<Project>('/projects', data);
+  getProjectDetails: async (id: number) => {
+    const response = await api.get<Project>(`/projects/${id}`);
+    return response.data;
+  },
+
+  createProject: async (data: { title: string; description: string ; status?: number; projectOwnerId?:number }) => {
+    const response = await api.post('/projects', data);
     return response.data;
   },
   
-  updateProject: async (id: number, data: { title: string; description?: string; dueDate?: string }) => {
+    updateProject: async (id: number, data: { title: string; description?: string ; status?: number; projectOwnerId?:number }) => {
     const response = await api.patch(`/projects/${id}`, data);
     return response.data;
   },
 
-  deleteProject: async (id: number) => {
+   deleteProject: async (id: number) => {
     const response = await api.delete<{ message: string }>(`/projects/${id}`);
     return response.data;
-  }
+  },
+
+  addMember: async (projectId: number, email: string, roleId: number) => {
+    const response = await api.post(`/projects/${projectId}/members`, { email, roleId });
+    return response.data;
+  },
+
 };

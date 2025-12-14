@@ -24,16 +24,17 @@ export default function CreateTaskModal({ open, onClose, onSubmit, projectId, in
   });
 
   useEffect(() => {
-    if (open) {
-      const fetchUsers = async () => {
+    if (open && projectId) {
+      const fetchProjectUsers = async () => {
         try {
+          // CALL THE NEW SERVICE METHOD
           const data = await userService.getProjectUsers(projectId);
           setUsers(data);
         } catch (err) {
           console.error("Failed to load project users:", err);
         }
       };
-      fetchUsers();
+      fetchProjectUsers();
     }
   }, [open, projectId]);
 
