@@ -18,7 +18,7 @@ export default function CreateProjectModal({ open, onClose, onSubmit, initialDat
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState(1);
-  const [ownerId, setOwnerId] = useState<number | string>("");
+  const [ownerId, setOwnerId] = useState<number | string>(""); 
   const [users, setUsers] = useState<User[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -116,25 +116,27 @@ export default function CreateProjectModal({ open, onClose, onSubmit, initialDat
               </select>
             </div>
 
-            {isEditMode && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Owner</label>
-                <div className="relative">
-                  <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <select
-                    value={ownerId}
-                    onChange={(e) => setOwnerId(Number(e.target.value))}
-                    className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
-                  >
-                    {users.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+            {/* Always Show Owner Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {isEditMode ? "Transfer Owner" : "Select Owner"}
+              </label>
+              <div className="relative">
+                <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <select
+                  value={ownerId}
+                  onChange={(e) => setOwnerId(Number(e.target.value))}
+                  className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                >
+                  <option value="">Me (Admin)</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name}
+                    </option>
+                  ))}
+                </select>
               </div>
-            )}
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 mt-6">

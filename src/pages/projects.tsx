@@ -10,7 +10,8 @@ import {
   Trash2,
   Calendar,
   Clock,
-  ListChecks
+  ListChecks,
+  UserCircle // <--- 1. ADDED THIS IMPORT
 } from 'lucide-react';
 
 import { projectService, type Project } from '../services/projectService';
@@ -235,6 +236,13 @@ export default function Projects() {
                     {project.description || "No description provided."}
                   </p>
 
+                  {/* --- 2. ADDED OWNER NAME DISPLAY HERE --- */}
+                  <div className="flex items-center gap-2 mb-3 text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
+                     <UserCircle className="w-4 h-4 text-gray-400" />
+                     <span className="text-xs">Owner:</span>
+                     <span className="font-medium text-gray-900">{project.owner?.name || "Me (Admin)"}</span>
+                  </div>
+
                   <div className="flex items-center gap-1.5 text-sm text-gray-600 mb-3">
                     <ListChecks className="w-4 h-4 text-indigo-600" />
                     <span>{project._count?.tasks ?? 0} tasks</span>
@@ -261,7 +269,7 @@ export default function Projects() {
 
                     <div className="pt-2">
                       <span className={`text-[10px] px-2 py-0.5 rounded border ${isAdmin ? 'bg-purple-50 border-purple-100 text-purple-600' : 'bg-blue-50 border-blue-100 text-blue-600'}`}>
-                        {isAdmin ? "Admin" : "Member"}
+                        {isAdmin ? "Admin (You)" : "Member (You)"}
                       </span>
                     </div>
                   </div>
