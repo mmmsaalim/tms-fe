@@ -8,7 +8,6 @@ import {
   ArrowDown,  // Improved Icon
   Minus,      // Improved Icon
   XCircle,    // For Inactive Project
-  ArrowLeft   // Kept for compatibility if needed
 } from "lucide-react";
 
 // --- 1. TASK STATUS CONFIG (For TaskCard) ---
